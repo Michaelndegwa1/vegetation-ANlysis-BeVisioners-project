@@ -1,7 +1,7 @@
 """CanopyLedger ingest per site (docs/specs/02-ingest-spec.md).
 
 For each site in sites.geojson and each month: summary statistics of S2 indices and S1 backscatter
-for the site polygon and its leakage ring, for all pixels and for Hansen tree-mask pixels.
+for the site polygon and its leakage ring, for all pixels, Hansen tree pixels and WorldCover woody (tree+shrub) pixels.
 Writes small long-format CSV tables, no rasters.
 
 Usage (run from the repo root with PYTHONPATH=.):
@@ -126,6 +126,13 @@ def tree_mask(year, tree_min):
     return h.select('treecover2000').gte(tree_min).And(lost_before.Not())
 
 
+def woody_mask():
+    """WorldCover 2021 tree (10) or shrub (20). Static map, so it does not respond to loss after 2021;
+    used to describe woody vegetation at dryland sites where Hansen tree cover is near zero."""
+    wc = ee.ImageCollection(C.DS_WORLDCOVER).first().select('Map')
+    return wc.eq(10).Or(wc.eq(20))
+
+
 # ---------------------------------------------------------------- statistics
 def _reducer():
     r = (ee.Reducer.mean().combine(ee.Reducer.median(), sharedInputs=True)
@@ -141,10 +148,12 @@ def month_features(site_id, props, geoms, s2, s1, y, m):
     valid = comp.select('S2_N').unmask(0).gt(0).rename('valid').toFloat()
     one = ee.Image.constant(1).rename('one').toFloat()
     img = ee.Image.cat([comp, valid, one])
+    woody = woody_mask()
     tmask = tree_mask(y, props.get('tree_cover_min', C.TREE_COVER_MIN_DEFAULT))
     out = []
     for zone, geom in zip(('site', 'ring'), geoms):
-        for mask_name, image in (('all', img), ('tree', img.updateMask(tmask))):
+        for mask_name, image in (('all', img), ('tree', img.updateMask(tmask)),
+                                 ('woody', img.updateMask(woody))):
             stats = image.reduceRegion(
                 reducer=_reducer(), geometry=geom, scale=C.STATS_SCALE_M,
                 maxPixels=1e13, tileScale=C.TILE_SCALE)
@@ -174,11 +183,14 @@ def to_long(wide, boundary_quality):
                     month=int(r['month']), mask=r['mask'], n_pixels=n_pix,
                     valid_frac=valid_frac, s2_n_mean=r.get('S2_N_mean'),
                     low_coverage=low, boundary_quality=boundary_quality)
+        n_before = len(rows)
         for band in C.BANDS_OUT:
             for st in STAT_NAMES:
                 v = r.get(f'{band}_{st}')
                 if v is not None:
                     rows.append(dict(base, band=band, stat=st, value=v))
+        if len(rows) == n_before:  # no valid pixels: keep a visible row instead of dropping the cell
+            rows.append(dict(base, n_pixels=n_pix or 0, band='_none', stat='_none', value=None))
     cols = ['site_id', 'zone', 'year', 'month', 'mask', 'band', 'stat', 'value', 'n_pixels',
             'valid_frac', 's2_n_mean', 'low_coverage', 'boundary_quality']
     df = pd.DataFrame(rows, columns=cols)
@@ -202,8 +214,8 @@ def write_outputs(df, site_id, year, feat, extra):
     df.to_csv(csv, index=False)
     side = {
         'site_id': site_id, 'year': year, 'spec': C.SPEC_VERSION,
-        'run_utc': datetime.datetime.utcnow().isoformat(timespec='seconds'),
-        'datasets': [C.DS_S2, C.DS_S2_CLOUD, C.DS_S1, C.DS_HANSEN],
+        'run_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
+        'datasets': [C.DS_S2, C.DS_S2_CLOUD, C.DS_S1, C.DS_HANSEN, C.DS_WORLDCOVER],
         'parameters': {k: getattr(C, k) for k in (
             'CLOUD_PROB_MAX', 'CLOUD_DILATE_M', 'STATS_SCALE_M', 'TILE_SCALE',
             'LOW_COVERAGE_FRAC', 'TREE_COVER_MIN_DEFAULT')},
@@ -256,7 +268,7 @@ def run_local(feats, years):
             s1 = load_s1(site.buffer(p['leakage_buffer_m']), start, end)
             geoms = site_geometries(feat)
             wide = []
-            # one getInfo per month (4 reductions): 48 at once hits "Too many concurrent aggregations"
+            # one getInfo per month (6 reductions): 72 at once hits "Too many concurrent aggregations"
             for m in range(1, 13):
                 fc = ee.FeatureCollection(month_features(p['site_id'], p, geoms, s2, s1, y, m))
                 info = None
