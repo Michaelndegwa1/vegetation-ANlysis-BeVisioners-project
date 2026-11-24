@@ -62,3 +62,17 @@
 - Old stats (v0.2, zone `ring` = 2 km, 18 site-years) moved to `data/processed/stats_v0.2/`; `data/processed/stats/` holds only new v0.3 output (Kasigau I 2023 so far).
 - Ingest v0.3 built except Sentinel-1 preprocessing; results and an unexplained 0.4-1.9% pixel-count offset recorded at the end of docs/specs/02-ingest-spec.md. Tests: `tests/test_validate_sites.py` (12), `tests/test_ingest_tables.py` (9).
 - Next: (1) test Drive mode + `--from-csv`; (2) re-run all 18 site-years in v0.3 format via Drive mode; (3) Sentinel-1 preprocessing; (4) 03a pre-build checks.
+
+## BUG FOUND AND FIXED: Hansen tree mask (2026-11-24)
+- Symptom: Chyulu `tree` mask had 193 pixels (expected ~35,000 at 90 m); Kasigau empty. Cause: Hansen `lossyear` is MASKED (not 0) where there was no loss, so `tree_mask` collapsed to pixels with later loss. Fix: `unmask(0)` on lossyear and treecover2000. Regression test `tests/test_tree_mask_gee.py` (Chyulu 34,708 px = tc>=30 minus lost-before; Kasigau I 27 px at 90 m; both pass).
+- AFFECTED (tree mask only; `all` and `woody` masks were unaffected): every stats file produced before the fix, including `data/processed/stats_v0.2/` (original 18) and `data/processed/stats_v0.3_buggy_treemask/`. Do not use their `tree` rows. Earlier statements that "Hansen tree mask is empty at Kasigau" came from this bug: the true Kasigau I count is tiny but not zero (27 px at 90 m, 0.07%); the 0.1%/0.0% Hansen shares in spec 03 Q2 came from a separate histogram and remain valid.
+- Production re-run started with the fix (Kasigau I, Kasigau II, then Chyulu, local mode); log scratch/ingest_v03b.log. A failed site-year is now skipped and listed at the end instead of stopping the run. Drive task `kasigau_ph1_rukinga_2023_wide` still READY (queued); it used the buggy mask too and is only useful for testing the converter.
+
+## Scope change (user, 2026-11-24): ingest Kasigau only for now
+- Chyulu Hills is DEFERRED, not removed from the registry. Mechanism: `data/skip_sites.txt` (one site_id per line, read by ingest `load_sites`; delete the line to re-enable). The running production loop will reach Chyulu last and skip it automatically. Chyulu 2019 v0.3 output was discarded with the tree-mask fix, so no valid Chyulu stats exist now.
+- Running now: Kasigau I (2019-2024) then Kasigau II (2019-2024), local mode, log scratch/ingest_v03b.log.
+
+## Production run stopped by the system (low memory), 2026-11-24 ~18:30
+- Claude Code reaped the background shell because the machine was critically low on memory (not a fault of the ingest). Not restarted automatically.
+- State: Kasigau I 2019-2024 complete (6/6, validated: 936/936 cells, coverage 100%, 3 low-coverage months). Kasigau II 2019 written (1125 s); 2020-2024 NOT done. Chyulu deferred (data/skip_sites.txt).
+- To resume (only when memory allows): `PYTHONPATH=. python -m canopyledger.pipeline.ingest --sites kasigau_ph2_ranches --start 2020 --end 2024 --run --mode local` (about 19 min per site-year, ~95 min total).

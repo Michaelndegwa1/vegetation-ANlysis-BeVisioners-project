@@ -4,6 +4,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SITES_FILE = REPO_ROOT / 'canopyledger' / 'sites' / 'sites.geojson'
 STATS_DIR = REPO_ROOT / 'data' / 'processed' / 'stats'
+SKIP_FILE = REPO_ROOT / 'data' / 'skip_sites.txt'   # one site_id per line; listed sites are excluded from ingest runs
 
 GEE_PROJECT = 'premium-episode-423509-g8'
 DRIVE_FOLDER = 'canopyledger_stats'

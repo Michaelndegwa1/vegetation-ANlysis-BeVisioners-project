@@ -43,9 +43,16 @@ def load_sites(only=None):
     if errors:
         raise SystemExit('sites.geojson invalid:\n  ' + '\n  '.join(errors))
     feats = json.loads(C.SITES_FILE.read_text(encoding='utf-8'))['features']
+    if C.SKIP_FILE.exists():
+        skip = {ln.strip() for ln in C.SKIP_FILE.read_text(encoding='utf-8').splitlines()
+                if ln.strip() and not ln.startswith('#')}
+        skipped = [f['properties']['site_id'] for f in feats if f['properties']['site_id'] in skip]
+        if skipped:
+            print(f'SKIPPED by {C.SKIP_FILE.name}: {skipped}')
+        feats = [f for f in feats if f['properties']['site_id'] not in skip]
     if only:
         known = {f['properties']['site_id'] for f in feats}
-        missing = set(only) - known
+        missing = set(only) - known - (skip if C.SKIP_FILE.exists() else set())
         if missing:
             raise SystemExit(f'unknown site_id(s): {sorted(missing)}; known: {sorted(known)}')
         feats = [f for f in feats if f['properties']['site_id'] in only]
@@ -144,8 +151,11 @@ def tree_mask(year, tree_min):
     """Hansen treecover2000 >= tree_min and not lost in an EARLIER year (loss in the same year
     still counts as tree; lossyear is 1..24 for 2001..2024)."""
     h = ee.Image(C.DS_HANSEN)
-    lost_before = h.select('lossyear').gt(0).And(h.select('lossyear').lt(year - 2000))
-    return h.select('treecover2000').gte(tree_min).And(lost_before.Not())
+    # lossyear is MASKED (not 0) where there was no loss; without unmask(0) the whole mask turns
+    # masked there and only pixels with later loss survive (bug found 2026-11-24 in v0.2/v0.3 runs).
+    ly = h.select('lossyear').unmask(0)
+    lost_before = ly.gt(0).And(ly.lt(year - 2000))
+    return h.select('treecover2000').unmask(0).gte(tree_min).And(lost_before.Not())
 
 
 def woody_mask():
@@ -289,6 +299,7 @@ def write_outputs(df, site_id, year, feat, extra):
         'position_error_km': feat['properties']['position_error_km'],
         'rows': int(len(df)),
         'pipeline_version': C.PIPELINE_VERSION,
+        'tree_mask_version': 'v2 (lossyear unmask fix, 2026-11-24); earlier files have an almost empty tree mask',
         'leakage_rings_m': feat['properties']['leakage_rings_m'],
         'mask_protected_in_ring': feat['properties']['mask_protected_in_ring'],
         's1_preprocessing': 'none: plain median of all IW scenes (spec v0.3 orbit/speckle/terrain steps NOT yet implemented)',
@@ -334,32 +345,42 @@ def _get_info(fc, label):
         except ee.EEException as e:
             print(f'    {label} attempt {attempt + 1} failed: {e}', flush=True)
             time.sleep(20 * (attempt + 1))
-    raise SystemExit(f'{label} failed after retries; nothing written')
+    raise RuntimeError(f'{label} failed after retries')
 
 
 def run_local(feats, years):
-    """getInfo mode: for tests and small sites. Production runs should use --mode drive."""
+    """getInfo mode: for tests and small sites. A failed site-year is logged and skipped (nothing
+    written for it); the run continues and exits non-zero at the end if anything failed."""
+    failures = []
     for feat in feats:
         p = feat['properties']
         zones, aoi = zone_geometries(feat), collection_aoi(feat)
         for y in range(years[0], years[1] + 1):
             t0 = time.time()
-            s2 = load_s2(aoi, f'{y}-01-01', f'{y + 1}-01-01')
-            s1 = load_s1(aoi, f'{y}-01-01', f'{y + 1}-01-01')
-            wide = []
-            # one getInfo per unit (12 reductions): many at once hit "Too many concurrent aggregations"
-            fc = ee.FeatureCollection(coverage_features(p['site_id'], p, zones, aoi, s2, y))
-            wide += [f['properties'] for f in _get_info(fc, f'coverage {y}')['features']]
-            for m in range(1, 13):
-                fc = ee.FeatureCollection(month_features(p['site_id'], p, zones, aoi, s2, s1, y, m))
-                wide += [f['properties'] for f in _get_info(fc, f'month {m}')['features']]
-                print(f"  {p['site_id']} {y}-{m:02d} done ({time.time() - t0:.0f}s)", flush=True)
+            try:
+                s2 = load_s2(aoi, f'{y}-01-01', f'{y + 1}-01-01')
+                s1 = load_s1(aoi, f'{y}-01-01', f'{y + 1}-01-01')
+                wide = []
+                # one getInfo per unit (12 reductions): many at once hit "Too many concurrent aggregations"
+                fc = ee.FeatureCollection(coverage_features(p['site_id'], p, zones, aoi, s2, y))
+                wide += [f['properties'] for f in _get_info(fc, f'coverage {y}')['features']]
+                for m in range(1, 13):
+                    fc = ee.FeatureCollection(month_features(p['site_id'], p, zones, aoi, s2, s1, y, m))
+                    wide += [f['properties'] for f in _get_info(fc, f'month {m}')['features']]
+                    print(f"  {p['site_id']} {y}-{m:02d} done ({time.time() - t0:.0f}s)", flush=True)
+            except RuntimeError as e:
+                print(f"  FAILED {p['site_id']} {y}: {e}; nothing written, continuing", flush=True)
+                failures.append(f"{p['site_id']} {y}")
+                continue
             df = to_long(wide, p['boundary_quality'])
             csv = write_outputs(df, p['site_id'], y, feat, {'mode': 'local',
                                                             'seconds': round(time.time() - t0, 1)})
-            print(f'  wrote {csv} ({len(df)} rows, {time.time() - t0:.0f}s)')
+            print(f'  wrote {csv} ({len(df)} rows, {time.time() - t0:.0f}s)', flush=True)
             for fl in sanity_flags(df):
                 print('  SANITY', fl)
+    if failures:
+        print('FAILED SITE-YEARS (re-run these):', failures)
+        raise SystemExit(1)
 
 
 def run_drive(feats, years):

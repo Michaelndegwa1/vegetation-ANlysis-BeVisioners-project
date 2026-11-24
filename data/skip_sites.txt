@@ -1,0 +1,2 @@
+# sites excluded from ingest runs (one site_id per line)
+chyulu_hills_redd
