@@ -28,7 +28,13 @@ TREE_COVER_MIN_DEFAULT = 30   # Hansen treecover2000 % threshold; per-site tunin
 BANDS_OUT = ['NDVI', 'EVI', 'NDWI', 'VV', 'VH', 'VH_VV']
 S1_FIRST_YEAR = 2015     # S1_GRD exists from 2014-10; use from 2015
 
-# Sanity bounds for outputs (to be tightened after the first run)
-SANITY = {'NDVI': (0.1, 0.8), 'VV': (-18.0, -6.0)}
-
-SPEC_VERSION = 'ingest-spec v0.2'
+# Sanity bounds per mask (spec 02 v0.3); dense forest at Chyulu legitimately exceeds 0.8 NDVI
+SANITY = {
+    'all': {'NDVI': (0.1, 0.8), 'VV': (-20.0, -5.0)},
+    'tree': {'NDVI': (0.1, 0.9), 'VV': (-20.0, -5.0)},
+    'woody': {'NDVI': (0.1, 0.9), 'VV': (-20.0, -5.0)},
+}
+DS_WDPA = 'WCMC/WDPA/current/polygons'
+COVERAGE_MIN_AREA_FRAC = 0.90   # VM0009 s6.8.4: >= 2 clear observations over >= 90% of the area
+SPEC_VERSION = 'ingest-spec v0.3'
+PIPELINE_VERSION = '0.3.0'

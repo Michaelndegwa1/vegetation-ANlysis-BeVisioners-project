@@ -14,11 +14,13 @@ DEFAULT_PATH = Path(__file__).with_name('sites.geojson')
 SUPPORTED_TYPES = {'REDD+', 'ARR', 'IFM'}
 REGISTRY_STATUS = {'confirmed', 'unverified'}
 BOUNDARY_QUALITY = {'approximate', 'official'}
-BASELINE_METHODS = {'hansen_2000_to_2018'}
+BASELINE_METHODS = {'hansen_2000_to_2018', 'landsat_pre2019'}
+MIN_RING_M = 2000  # Verra VMD0055 v1.1 minimum leakage-belt width
 REQUIRED = ['site_id', 'name', 'project_type', 'registry', 'registry_id', 'registry_id_status',
             'funding_start', 'monitoring_start', 'baseline_method', 'boundary_quality',
             'boundary_source', 'position_error_km', 'area_ha_documented',
-            'area_ha_documented_source', 'leakage_buffer_m']
+            'area_ha_documented_source', 'leakage_buffer_m', 'leakage_rings_m',
+            'mask_protected_in_ring']
 GEOD = Geod(ellps='WGS84')
 
 
@@ -66,6 +68,20 @@ def validate(path=DEFAULT_PATH):
         if p.get('boundary_quality') == 'approximate' and not isinstance(
                 p.get('position_error_km'), (int, float)):
             e('approximate boundary needs numeric position_error_km')
+        rings = p.get('leakage_rings_m')
+        if rings is not None:
+            if (not isinstance(rings, list) or not rings
+                    or not all(isinstance(r, int) and not isinstance(r, bool) for r in rings)):
+                e('leakage_rings_m must be a non-empty list of integers (metres)')
+            else:
+                if rings != sorted(set(rings)):
+                    e('leakage_rings_m must be strictly increasing')
+                if min(rings) < MIN_RING_M:
+                    e(f'leakage_rings_m has a ring below the {MIN_RING_M} m minimum')
+                if p.get('leakage_buffer_m') not in rings:
+                    e('leakage_rings_m must contain leakage_buffer_m')
+        if 'mask_protected_in_ring' in p and not isinstance(p['mask_protected_in_ring'], bool):
+            e('mask_protected_in_ring must be true or false')
         if p.get('funding_start') is None and not p.get('funding_start_note'):
             w('funding_start null without funding_start_note')
 

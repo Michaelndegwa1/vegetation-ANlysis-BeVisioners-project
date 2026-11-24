@@ -1,15 +1,14 @@
 # Progress log
 
 ## 2026-11-24
-- Done: Week-1 ingest prototype (`canopyledger/pipeline/kenya_ingest.py`, tested 2023 on old placeholder Mau box; still single-AOI, EPSG:32736, needs rewrite to loop over sites and export stats tables).
+- Done: Week-1 ingest prototype (Week-1 single-AOI script (now archived), tested 2023 on old placeholder Mau box; still single-AOI, EPSG:32736, needs rewrite to loop over sites and export stats tables).
 - Done: approximate boundaries for Chyulu Hills (Verra 1408), Kasigau Phase I and II in `canopyledger/sites/sites_draft.geojson`.
 - Done: folder structure, CLAUDE.md, .gitignore.
-- Next: (1) map unread parts of `legacy_uk/dashboard.py` + analysis code via subagents -> `docs/uk-pipeline-notes.md`; (2) verify dataset IDs/claims; (3) specs in `docs/specs/` incl. site-file schema; (4) rewrite ingest per site.
+- Next: (1) verify dataset IDs/claims; (2) specs in `docs/specs/` incl. site-file schema; (3) rewrite ingest per site.
 - Open (user): confirm Verra IDs/status, Kasigau start dates, official boundary files, 12,000 ha/yr and 1.7bn trees sources.
 
 ## 2026-11-24 (later) - Phase 1 mapping done
-- Notes written by subagents (read-only, nothing executed): `docs/uk-notes-dashboard.md`, `docs/uk-notes-analysis.md`.
-- Application claims vs UK code: SARIMA 2020-23 -> 2024 CONTRADICTED (ARIMA(1,1,1)(1,1,1,12) + Prophet, fit on whole series, in-sample validation, dashboard.py L906-912); 225 km2 CONTRADICTED (code says 10 km2; box ~89 km2 by calc; 225 = 15x15 sample grid); z-score CONFIRMED (|z|>2.0 in analysis, >2.5 in dashboard); NDVI 0.3 PARTIAL (drought rule/fallback only; main thresholds 0.6/0.4/0.2); 15% cloud filter CONFIRMED (scene level).
+- UK crop-monitoring material removed from the project on 2026-11-24 (moved to D:\New Projects\vegetation_uk_archive, outside the repo). The application text still describes that earlier project: pending user decision.
 - Action: rewrite the application's "What have you done" paragraph to match the code before submitting.
 - Next: Phase 2 verification list (dataset IDs, claims 12,000 ha/yr, 1.7bn trees), then specs.
 
@@ -26,4 +25,40 @@
 - `canopyledger/sites/sites.geojson` (3 sites, normalised schema) + `validate.py` (passes 0 errors/0 warnings; negative tests catch bad type, duplicate id, missing field, missing position error). Old draft archived in `sites/_archive/`. One-off script: `scratch/migrate_sites.py`.
 - Polygon areas recomputed geodesically: Chyulu 423,112 ha (+12.9%), Rukinga 31,950 (+5.9%), Phase II 178,050 (+4.9%) vs documented.
 - Run from repo root with PYTHONPATH=. (no package install yet).
-- Next: 02 ingest per site (rewrite kenya_ingest.py).
+- Next: 02 ingest per site (per-site rewrite, done).
+
+## Ingest rewrite (spec 02 v0.2) - built and tested on Kasigau I 2023
+- New: `canopyledger/config.py`, `canopyledger/pipeline/ingest.py` (per site, site+ring, masks all/tree/woody, local + Drive modes, `--from-csv`). `kenya_ingest.py` now superseded (keep until Chyulu run confirmed, then archive).
+- Tests passed (see end of docs/specs/02-ingest-spec.md): polygon-level dry run, sanity bounds, spot check 0.000%, ring area, idempotent output.
+- Bugs found and fixed: Hansen 2024_v1_12 deprecated -> 2025_v1_13 (my earlier verification missed it); 72 simultaneous reductions -> "Too many concurrent aggregations" (now per-month getInfo); empty tree-mask cells vanished silently (now `_none` rows); 1e-14 non-reproducibility (rounded).
+- MAJOR FINDING (docs/specs/03 Q2): Hansen tree cover is ~0 at Kasigau (>=30% cover: 0.1%/0.0% of area); WorldCover says 72-92% shrubland. Hansen-based baseline/classifier labels cannot work there. Needs user decision before 03a: woody-vegetation definition + independent labels + GEDI/Landsat baseline.
+- Next: Chyulu runtime result; run all sites 2019-2024; then 03a once Q1/Q2 decided.
+
+## 03a classifier spec written (v0.1): docs/specs/03a-woody-classifier.md
+- Needs from user before build: confirm woody definition (default >=20% cover in 30 m plot), points per site (proposal 100), whether Google Earth Pro historical imagery near 2023 is usable at the sample areas, reliability thresholds (OA<0.75 or F1<0.70 -> low reliability).
+- Ingest all-sites run (2019-2024) was running in background; check data/processed/stats and scratch/ingest_all.log.
+
+- 03a decisions recorded (v0.2): 20% woody definition, 100 pts/site, reliability OA<0.75 or F1<0.70. Imagery date availability still unconfirmed.
+
+## Benchmarks merged (2026-11-24): docs/benchmarks/benchmarks.md (+ part-a/b/c source notes)
+- Web research by 3 subagents; many figures are search-summary only and flagged. Key results: 100 pts/site = about +/-7 pts OA (Wilson), no tight area CIs; WorldCover ~76.7% OA caps pseudo-label quality; Hansen (48% loss omission in SSA) and GEDI (cannot resolve shrubs <2.3 m) cannot baseline Kasigau -> Landsat baseline; S1 preprocessing incomplete (no speckle/terrain/orbit control); leakage ring 2 km is Verra's minimum -> add 5/10 km sensitivity rings and mask Tsavo; report 90% CI; Kenya forest def 15%/0.5 ha/2 m (our woody class is NOT the legal definition); VM0009 inactivated, CCP not applicable; never claim verification or over-crediting.
+- Proposed spec changes listed in benchmarks.md section 4 (NOT applied). Decisions needed D1-D5 (section 5): reliability rule (CI lower bound vs point estimate), sample size, pseudo-label fallback, Landsat baseline, Kasigau methodology docs.
+- Discrepancy to resolve: verification-claims.md says Kenya LN 84/2024 text was read; benchmark Part C could not fetch it. Re-check before quoting regulation numbers.
+- Ingest all-sites run still in progress (6 of 18 site-years at merge time).
+
+## Spec changes from benchmarks APPLIED to docs (not to code), 2026-11-24
+- 01 -> v0.2 (leakage_rings_m, mask_protected_in_ring); 02 -> v0.3 (S1 orbit/speckle/terrain, 2/5/10 km rings + WDPA mask, yearly >=2-observation coverage row, per-mask sanity bounds, Drive mode for production, pipeline_version, tests 6-8); 03a -> v0.3 (no GEDI/Hansen baseline for Kasigau, CloudScore+ comparison, 10/15/20/30% sensitivity, PA+UA, 90% CI area + >10% low-precision flag, 0.5 ha MMU, definition note); 03 index: 03b parameters, 03d leakage-as-indicator, 03f report requirements P1-P7, new 03g Landsat baseline.
+- NOT changed: application text (benchmarks section 4 item 5), code (config sanity bounds, sites.geojson fields, validate.py, ingest.py). Still open: D1-D3, D5.
+- Ingest all-sites run complete: 18/18 site-years, 32,571 rows; 5 low-coverage site-months (Kasigau I 2019-10, 2022-09, 2024-01; Kasigau II 2019-10, 2024-01). Existing files use zone `ring` (= 2 km) and the v0.2 sanity bounds.
+- Next build session: update sites.geojson + validate.py (01 v0.2), then ingest v0.3 (S1 preprocessing, rings, coverage row), then 03a pre-build checks.
+
+## Site file + validator updated to spec 01 v0.2 (2026-11-24)
+- `sites.geojson`: added leakage_rings_m [2000,5000,10000] and mask_protected_in_ring true to all sites; Kasigau I/II baseline_method = landsat_pre2019 (Hansen cannot baseline dryland shrubland); Chyulu stays hansen_2000_to_2018 provisionally (baseline_note) until spec 03g.
+- `validate.py`: checks rings (int list, increasing, >= 2000 m, contains primary buffer), mask flag boolean, new baseline enum. Tests: `PYTHONPATH=. python tests/test_validate_sites.py` (12 checks incl. real file, all pass). One-off script scratch/migrate_sites_v2.py.
+- Ingest code (v0.2) still reads only leakage_buffer_m, so it runs unchanged on the new file; v0.3 (rings, S1 preprocessing, coverage row) is the next build.
+
+## UK removal + ingest v0.3 partial build (2026-11-24)
+- User instruction: remove everything about UK crop monitoring. Done: `legacy_uk/`, the two UK notes files and the superseded Week-1 script moved OUT of the project to `D:\New Projects\vegetation_uk_archive` (moved, not deleted); references removed from CLAUDE.md, specs 00/02/03, progress and memory. NOT touched: `docs/application/...md` still describes the earlier UK project in its answers (user decision pending).
+- Old stats (v0.2, zone `ring` = 2 km, 18 site-years) moved to `data/processed/stats_v0.2/`; `data/processed/stats/` holds only new v0.3 output (Kasigau I 2023 so far).
+- Ingest v0.3 built except Sentinel-1 preprocessing; results and an unexplained 0.4-1.9% pixel-count offset recorded at the end of docs/specs/02-ingest-spec.md. Tests: `tests/test_validate_sites.py` (12), `tests/test_ingest_tables.py` (9).
+- Next: (1) test Drive mode + `--from-csv`; (2) re-run all 18 site-years in v0.3 format via Drive mode; (3) Sentinel-1 preprocessing; (4) 03a pre-build checks.

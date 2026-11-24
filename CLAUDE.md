@@ -10,7 +10,6 @@ Forest-type projects only (REDD+, ARR, IFM). Soil/grassland projects are unsuppo
 - `canopyledger/dashboard/` Streamlit app
 - `data/raw`, `data/processed`, `outputs/`  gitignored working data; export small per-site stats tables, not full rasters
 - `docs/specs/` specs (write before building); `docs/reference/` the two Claude best-practice guides; `docs/application/` beVisioneers text
-- `legacy_uk/`  old UK wheat pipeline, READ-ONLY reference. Do not import or edit.
 - `scratch/`    throwaway experiments (gitignored)
 - `progress.md` session handoff log: update at the end of every session
 

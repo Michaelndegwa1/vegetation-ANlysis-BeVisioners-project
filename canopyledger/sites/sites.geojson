@@ -1,7 +1,7 @@
 {
  "type": "FeatureCollection",
  "name": "canopyledger_sites",
- "spec": "01-site-schema v0.1",
+ "spec": "01-site-schema v0.2",
  "features": [
   {
    "type": "Feature",
@@ -28,7 +28,14 @@
      "traced_from_map": 422977
     },
     "notes": "Documented areas conflict (374,678 vs 410,534 ha); boundary may have been extended after 2016.",
-    "area_ha_polygon": 423111.5
+    "area_ha_polygon": 423111.5,
+    "leakage_rings_m": [
+     2000,
+     5000,
+     10000
+    ],
+    "mask_protected_in_ring": true,
+    "baseline_note": "hansen_2000_to_2018 kept provisionally; Hansen under-detects loss in sub-Saharan Africa, so revisit when spec 03g (Landsat baseline) is written"
    },
    "geometry": {
     "type": "Polygon",
@@ -1889,7 +1896,7 @@
     "project_type": "REDD+",
     "registry_id_status": "unverified",
     "monitoring_start": "2019-01-01",
-    "baseline_method": "hansen_2000_to_2018",
+    "baseline_method": "landsat_pre2019",
     "boundary_quality": "approximate",
     "leakage_buffer_m": 2000,
     "site_id": "kasigau_ph1_rukinga",
@@ -1907,7 +1914,13 @@
     "area_ha_alt": {
      "traced_from_map": 31925
     },
-    "area_ha_polygon": 31949.6
+    "area_ha_polygon": 31949.6,
+    "leakage_rings_m": [
+     2000,
+     5000,
+     10000
+    ],
+    "mask_protected_in_ring": true
    },
    "geometry": {
     "type": "Polygon",
@@ -3784,7 +3797,7 @@
     "project_type": "REDD+",
     "registry_id_status": "unverified",
     "monitoring_start": "2019-01-01",
-    "baseline_method": "hansen_2000_to_2018",
+    "baseline_method": "landsat_pre2019",
     "boundary_quality": "approximate",
     "leakage_buffer_m": 2000,
     "site_id": "kasigau_ph2_ranches",
@@ -3803,7 +3816,13 @@
      "traced_from_map": 177915
     },
     "notes": "MultiPolygon of ranch blocks; individual blocks not separated.",
-    "area_ha_polygon": 178049.6
+    "area_ha_polygon": 178049.6,
+    "leakage_rings_m": [
+     2000,
+     5000,
+     10000
+    ],
+    "mask_protected_in_ring": true
    },
    "geometry": {
     "type": "MultiPolygon",
