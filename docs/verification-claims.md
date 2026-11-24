@@ -1,0 +1,47 @@
+# Verification of claims (web research, run 2026-11-24)
+
+Limits: several primary sites (un.org, forestry.go.ke, FAO openknowledge, GFW dashboard, Carbon Pulse, S&P) returned 403/blank to the fetch tool, so some figures are via secondary reports and are flagged. The regulation text was read directly from the Kenya Law PDF.
+
+| # | Claim | Verdict | Figure / year found | Key source |
+|---|---|---|---|---|
+| 1 | Kenya loses ~12,000 ha forest/yr | PARTLY (stale, mixes definitions) | See note 1 | UNDP, GFW via aggregator, FRA 2025 via news |
+| 2 | ~1.7 bn trees planted after 4 years | PARTLY | ~1.7 bn (DP Kindiki, 22 May 2026); other official figures higher | allAfrica 22 May 2026 |
+| 3 | NPAFRR 2022, 10.6 Mha, 15 bn trees by 2032, 30% | PARTLY (targets confirmed, launch year not confirmed by me) | 10.6 Mha, 15 bn seedlings, 2032, ">30%" in launch speech | State House programme PDF (via search snippet) |
+| 4 | Carbon Markets Regs 2024: MRV + 3rd-party verification; NEMA is DNA | Verification CONFIRMED; NEMA-as-DNA CONTRADICTED/not supported | Legal Notice 84 of 2024 | Kenya Law |
+| 5 | Current tree cover % | CONFIRMED with caveat | 12.13% tree cover, 8.83% forest cover, NFRA 2021 (released June 2022) | Standard / KFS reports |
+| 6 | REDD+ status (Chyulu, Kasigau) | PARTLY | See note 6 | Verra, S&P, CI |
+
+## Notes
+
+### 1. Forest loss ~12,000 ha/yr
+- The 12,000 ha/yr line is widely repeated (UNDP Kenya REDD+ page, FCPF, Greenpeace, People Daily). It is an old gross-deforestation estimate. World Bank figure in Business Daily: 12,600 ha/yr for 1990-2005. Treat as outdated.
+- Global Forest Watch (tree cover loss, canopy >5 m removal for any reason incl. plantation harvest and fire, NOT deforestation, NOT net): 14,057 ha in 2024, +25.2% vs 2023. Cumulative about 400,390 ha 2001-2024 (about 12.1% of 2000 tree cover). Secondary source (Geo Factbook, citing GFW/Our World in Data); not verified on the GFW dashboard. Source: https://geofactbook.com/countries/kenya/tree-cover-loss
+- FAO FRA 2025 (net change in forest area = area at two dates, so gains offset losses): reported via news as a net GAIN of 173,000 ha since 1990 (3.741 Mha in 1990 to 3.914 Mha in 2025, about 6.7% of land); +1.47%/yr in last decade; earlier net loss of 28,800 ha/yr in 2000-2015. I could not read the FAO country table directly. Source: https://big3africa.org/2025/10/22/kenya-emerge-a-rare-success-story-in-fight-against-deforestation/ (secondary); FAO method: https://openknowledge.fao.org/server/api/core/bitstreams/2dee6e93-1988-4659-aa89-30dd20b43b15/content/FRA-2025/forest-extent-and-change.html
+- CONFLICT: Kenya Forest Service NFRA 2024 (as reported by The Standard, People Daily) says about 84,716 ha/yr deforested plus 14,934 ha/yr degraded. Not verified against the report itself. The 12,000 figure is therefore not defensible as "current"; if used, label as "GFW gross tree cover loss, about 14,000 ha in 2024" and do not call it net loss. Net per FRA is positive.
+
+### 2. Trees planted
+- 1.7 bn: Deputy President Kindiki, 22 May 2026, "about 1.7 billion trees". https://allafrica.com/stories/202605220610.html
+- Conflicts: government/PS statements of about 2 bn (Citizen Digital, "Gov't says Kenya has planted 2 billion trees"), 2.1 bn and 1.4 Mha restored (a 2025 PS statement), 2.2 bn (Interior PS, undated), 1.78 bn (Nation, undated), and 783 million (Standard, April 2025 figure). Kenya Forest Service/State figures count seedlings planted, not survival; Capital FM (10 Feb 2026) and allAfrica (Feb 2026) report survival-tracking gaps. Use "1.7 to 2.2 bn planted (government, 2026), survival unverified".
+- Four years: the drive launched Nov 2022, so "four years" fits 2026.
+
+### 3. NPAFRR
+- Launch speech: seedlings on 10.6 Mha of degraded forest and rangeland, 15 bn seedlings to 2032, "total national tree cover beyond 30 percent". PDF (State House): https://kntsite.president.go.ke/wp-content/uploads/National-Program-for-Accelarated-Forestry-and-Rangelands-Restoration.pdf (could not fetch the PDF; text taken from search snippet). Forestry Secretariat: 30% by 2032, https://forestry.go.ke/15b-secretariat
+- Launch year 2022 not independently confirmed by me from the PDF (the 15 bn campaign launch was Nov 2022 per press; SCMP: https://www.scmp.com/news/world/africa/article/3241402/kenya-begins-planting-billions-trees-new-public-holiday-after-worst-drought-40-years). One 2026 article gave a 2030 target, an outlier.
+
+### 4. Carbon Markets Regulations 2024 (read text: https://new.kenyalaw.org/akn/ke/act/ln/2024/84/eng@2024-06-07 ; PDF https://reddplus.forestry.go.ke/sites/default/files/REDD%2B/Downloads/LEGISTLATIONS/The%20Climate%20Change%20%28Carbon%20Markets%29%20Regulations%202024.pdf)
+- Legal Notice 84 of 2024, under the Climate Change Act (as amended 2023).
+- Reg 16(c),(d): each project must "be subject to certification and validation by an independent auditor before the project starts" and "be subject to verification of each project result by an independent auditor".
+- Reg 20(1): prior certification to international standards by a recognised international body, validation by an independent auditor, and "each result shall be verified for compliance"; breach is an offence (20(2)).
+- Reporting: Reg 26 requires an annual progress report to the DNA (Ninth Schedule), offence if not submitted; disclosure of verified emission reductions and revenues (Reg 18 area, disclosure to DNA). Monitoring: Reg 7(e) DNA monitors registered projects and compliance; PDD must include baseline and monitoring methodology.
+- DNA: Reg 7, "the Designated National Authority appointed under section 8(2A) of the Act"; Reg 8-ish: head of the DNA is the National Registrar of the National Carbon Registry (s.23G of the Act). The text contains NO mention of NEMA. NEMA was the CDM-era DNA (older sources), not the Article 6 DNA under these Regulations. The DNA sits with the Climate Change Directorate/Ministry of Environment side. I did not locate the text of s.8(2A) of the Act; check it before stating who exactly the DNA is.
+- Newer development (not requested but material): Aug 2026 reports (AP via WTOP) say Kenya issued a new Article 6 rule book capping internationally authorised credits at 10 Mt CO2e through 2030 (1.67 Mt/yr), replacing the three-stage No-Objection/Approval/Authorization process, and excluding forest and land-use projects "for now". https://wtop.com/world/2026/08/kenya-unveils-carbon-market-rule-book-and-caps-the-overseas-sale-of-carbon-credits/ . Check whether the Regulations have since been amended.
+
+### 5. Tree cover
+- NFRA 2021 (released June 2022): tree cover about 7.18 Mha = 12.13% of land; forest cover 5,226,191.79 ha = 8.83% (up from 5.9-5.99% in 2018). Reports in 2025-26 still repeat 12.13%; one cites an "NFRA 2024" report for the same numbers, unconfirmed. No newer national figure found (a 2026 KFS tool shows Makueni County only: 14.72% tree cover). Note FRA 2025 forest share (6.7%) uses a different definition than KFS "forest cover" (8.83%); do not mix them.
+- Sources: https://www.standardmedia.co.ke/national/article/2001447088/kenya-makes-strides-in-tree-and-forest-cover ; https://www.the-star.co.ke/news/2022-06-05-cutting-edge-tech-used-to-measure-tree-cover-says-kfs/ ; https://www.standardmedia.co.ke/business/health-science/article/2001529078/government-banks-on-new-strategy-to-increase-tree-cover
+
+### 6. REDD+ projects
+- Kasigau Corridor (Verra 562 and 612, Wildlife Works): Verra opened a review 3 Nov 2023 over alleged abuse; completed 1 Feb 2024, found Wildlife Works "is taking the actions required"; projects remain active, but Verra may put them on hold if evidence is not provided (due within 12 months) or later verifications show lapses. https://verra.org/verra-completes-review-of-kasigau-projects/ . SOMO report raised labour/abuse concerns: https://www.somo.nl/greenlighting-abuse/ . No suspension found.
+- Issuance: S&P Global 16 Jul 2026 interview (snippet only; page blocked): Kasigau and Mai Ndombe issuance stalled about four years because of REDD methodology changes; last issuance 2022; plan to move to Verra VM0048 or another registry; new issuance planned for vintages from 2023; 2021-vintage Kasigau II units offered about $3.20/t. https://www.spglobal.com/energy/en/news-research/latest-news/energy-transition/071626-interview-wildlife-works-weighs-new-mai-ndombe-redd-credits-issuance-after-four-year-gap . A Kasigau II verification report (AENOR, 13 Sep 2023) exists.
+- Chyulu Hills (VCS 1408, Conservation International lead, about 410,534 ha, run with Maasai Wilderness Conservation Trust etc.): more than 5.1 million credits registered, latest issuance covered 2017-2020; on 15 May 2025 1,500 VCUs (vintage 2020) retired for IUCN. No controversy, suspension or 2024-26 issuance news found. An old Verra page saying "not yet issued" is outdated. https://www.conservation.org/projects/chyulu-hills-carbon-project ; https://iucncongress2025.org/files/2025-03/IUCN_Congress2025_CarbonOffsetProject_Chyulu_Hills.pdf
+- Government: no moratorium found. Instead: Kenya REDD+ Registry launched July 2025; National Carbon Registry launched Feb 2026 (interoperable); Aug 2026 Article 6 cap and exclusion of forestry for now (see note 4); Koko Networks denied international sale approval (Feb 2026). The 2024 Regulations include a benefit-sharing regime for community projects (revenue sharing schedule), which could affect existing REDD+ projects; I did not verify the percentages.
